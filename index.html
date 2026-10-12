@@ -35,6 +35,7 @@
     --col: max(72px, calc(5ch + 36px));
     --card-col: 110px;
     --gap: 10px;
+    --btn-gap: 6px;
     --stage: #e9eeea;
     --side: 36px;
     --end: 44px;
@@ -165,8 +166,9 @@
     box-shadow: inset 1px 0 var(--line);
   }
   .foot .rowend { z-index: 4; display: grid; grid-template-rows: subgrid; place-items: center; background: var(--head); }
+  /* same 6px margin as "+ Add round": fill the names-row cell minus the margin */
   .addp {
-    grid-row: 2; width: calc(var(--name-h) - 4px); aspect-ratio: 1; padding: 0; border-radius: 10px; border: 1.5px dashed var(--brand); cursor: pointer;
+    grid-row: 2; align-self: stretch; justify-self: stretch; margin: var(--btn-gap); padding: 0; border-radius: 10px; border: 1.5px dashed var(--brand); cursor: pointer;
     background: transparent; color: var(--brand); font-size: 24px; line-height: 1;
   }
 
@@ -186,7 +188,7 @@
   }
   .total.lead { background: var(--lead); }
 
-  .addround { position: sticky; left: 0; width: var(--card-w, 100%); max-width: 100%; padding: 8px 12px; display: flex; }
+  .addround { position: sticky; left: 0; width: var(--card-w, 100%); max-width: 100%; padding: var(--btn-gap); display: flex; }
   .addround button {
     flex: 1; min-height: 44px; border: 1.5px dashed var(--brand); border-radius: 12px; background: transparent;
     color: var(--brand); font-size: 20px; cursor: pointer;
