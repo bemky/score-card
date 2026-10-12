@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ScoreCard</title>
-<meta name="theme-color" content="#1f5236">
+<meta name="theme-color" content="#2f7550">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -23,7 +23,7 @@
     --brand: #2e7d4f;
     --brand-dark: #1f5a3a;
     --felt: #2a6a46;
-    --topbar: #1f5236;
+    --felt-top: #2f7550;
     --cream: #f3ead6;
     --paper: #f7f1e4;
     --paper-dim: #ece3cf;
@@ -61,6 +61,8 @@
     --h-heavy: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 6' preserveAspectRatio='none'><filter id='g'><feTurbulence baseFrequency='.9' seed='13'/><feDisplacementMap in='SourceGraphic' scale='1.6'/></filter><g fill='none' stroke='%233b3732' vector-effect='non-scaling-stroke' filter='url(%23g)'><path d='M-2 2.6C60 2 120 3.2 202 2.4' stroke-opacity='.75' stroke-width='1.8' vector-effect='non-scaling-stroke'/><path d='M-2 3.6C70 3.9 140 3 202 3.7' stroke-opacity='.4' stroke-width='1' vector-effect='non-scaling-stroke'/></g></svg>");
     /* pencil loop drawn around the leading total */
     --circle: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 44' preserveAspectRatio='none'><filter id='g'><feTurbulence baseFrequency='.8' seed='3'/><feDisplacementMap in='SourceGraphic' scale='1.5'/></filter><path d='M70 6C40 1 8 8 5 22S30 42 55 40 97 32 95 19 72 3 48 5' fill='none' stroke='%232e7d4f' stroke-opacity='.85' stroke-width='1.8' stroke-linecap='round' vector-effect='non-scaling-stroke' filter='url(%23g)'/></svg>");
+    /* lime highlighter stroke: slightly tilted block with rough edges and ink streaks */
+    --highlight: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 40' preserveAspectRatio='none'><filter id='r' x='-5%' y='-20%' width='110%' height='140%'><feTurbulence type='fractalNoise' baseFrequency='.06 .45' numOctaves='2' seed='4'/><feDisplacementMap in='SourceGraphic' scale='7'/></filter><g filter='url(%23r)'><path d='M4 9L97 4 96 33 3 37Z' fill='%237fdc45' fill-opacity='.9'/><path d='M5 11L96 6 96 13 5 18Z' fill='%23c4f59c' fill-opacity='.45'/><path d='M4 27L96 23 96 30 4 34Z' fill='%235cc931' fill-opacity='.35'/><path d='M2 20L98 16 97 21 3 25Z' fill='%2378d843' fill-opacity='.25'/></g></svg>");
     /* green pencil scribble fill for "+ Add round" */
     --hatch: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='44'><filter id='g'><feTurbulence baseFrequency='.7' seed='6'/><feDisplacementMap in='SourceGraphic' scale='2.2'/></filter><g stroke='%232e7d4f' stroke-width='1.5' stroke-linecap='round' fill='none' filter='url(%23g)'><path d='M-6 46L22-2M4 47L33-3M15 46L44-2M27 47L55-3M38 46L66-2M49 47L77-3M61 46L89-2M72 47L100-3M83 46L111-2M95 47L123-3M106 46L134-2' stroke-opacity='.26'/><path d='M-1 46L27-2M21 47L50-3M44 46L72-2M66 47L95-3M89 46L117-2' stroke-opacity='.16'/></g></svg>");
     /* one spiral coil (two wires) dropping into a punched hole; tiled along the card top */
@@ -69,12 +71,12 @@
   * { box-sizing: border-box; }
   html, body { height: 100%; margin: 0; overflow: hidden; }
   /* solid green behind the status bar so iOS doesn't fade the header */
-  html { background: var(--topbar); }
+  html { background: var(--felt-top); }
   body {
     background:
       radial-gradient(120% 80% at 50% 40%, transparent 40%, rgba(0,0,0,.35) 100%),
       var(--grain-dark),
-      linear-gradient(180deg, #2f7550, var(--felt) 45%, #245c3d);
+      linear-gradient(180deg, var(--felt-top), var(--felt) 45%, #245c3d);
     color: var(--ink);
     font: 18px/1.3 var(--hand);
     font-synthesis: none;
@@ -86,19 +88,12 @@
   }
   button { font: inherit; color: inherit; }
 
-  /* top bar: a darker felt panel with a rounded lower edge */
+  /* no bar: just the Reset button sitting on the felt, top right */
   .topbar {
     flex: none;
-    position: sticky; top: 0; z-index: 10;
-    display: flex; align-items: center; justify-content: space-between;
-    padding: calc(env(safe-area-inset-top) + 12px) max(12px, env(safe-area-inset-right)) 12px max(12px, env(safe-area-inset-left));
-    background: var(--grain-dark), linear-gradient(180deg, #1c4b32, var(--topbar));
-    color: var(--cream);
-    border-radius: 0 0 16px 16px;
-    box-shadow: inset 0 0 0 2px rgba(255,255,255,.06), inset 0 -3px 0 rgba(0,0,0,.25), 0 4px 14px rgba(0,0,0,.35);
+    display: flex; justify-content: flex-end;
+    padding: calc(env(safe-area-inset-top) + 12px) max(12px, env(safe-area-inset-right)) 0 max(12px, env(safe-area-inset-left));
   }
-  .topbar h1 { margin: 0; display: flex; }
-  .topbar h1 svg { width: 38px; height: 38px; display: block; filter: drop-shadow(0 1px 1px rgba(0,0,0,.4)); }
   .raised {
     min-height: 44px; padding: 0 18px; border: 0; border-radius: 14px; cursor: pointer;
     background: linear-gradient(180deg, #3f8c5f, #2b6c47);
@@ -229,7 +224,7 @@
   /* same 6px margin as "+ Add round": fill the names-row cell minus the margin */
   .addp {
     grid-row: 2; align-self: stretch; justify-self: stretch; margin: var(--btn-gap); padding: 0;
-    border-radius: 10px; border: 1.5px dashed var(--brand); cursor: pointer;
+    border-radius: 10px; border: 2px dashed var(--brand); cursor: pointer;
     background: transparent; color: var(--brand); font-size: 28px; line-height: 1;
   }
 
@@ -238,8 +233,8 @@
     font: inherit; font-size: 26px; text-align: right; color: var(--ink); background: transparent;
     border: 0; border-radius: 0; outline: none;
   }
-  .cell input:focus { background: rgba(46,125,79,.12); box-shadow: inset 0 0 0 2px rgba(46,125,79,.75); border-radius: 6px; }
-  .namecell:focus-within input { background: rgba(46,125,79,.12); border-radius: 6px; }
+  /* selected cell: a swipe of lime highlighter */
+  .cell input:focus, .namecell input:focus { background: var(--highlight) center / calc(100% - 6px) 80% no-repeat; }
 
   .total {
     grid-column: 1 / -1; grid-row: 1; align-self: stretch;
@@ -252,7 +247,7 @@
 
   .addround { position: sticky; left: 0; width: var(--card-w, 100%); max-width: 100%; padding: var(--btn-gap); display: flex; }
   .addround button {
-    flex: 1; min-height: 44px; border: 1.5px dashed var(--brand); border-radius: 12px;
+    flex: 1; min-height: 44px; border: 2px dashed var(--brand); border-radius: 12px;
     background: var(--hatch) 0 0 / auto 100% repeat-x;
     color: var(--brand-dark); font-size: 24px; cursor: pointer;
   }
@@ -310,7 +305,7 @@
   .actions { display: flex; flex-direction: column; gap: 10px; }
   .actions button {
     min-height: 48px; border-radius: 12px; cursor: pointer; font-size: 22px;
-    border: 1.5px dashed var(--muted); background: transparent; color: var(--ink);
+    border: 2px dashed var(--muted); background: transparent; color: var(--ink);
   }
   .actions button.danger {
     border: 0; color: var(--cream);
@@ -321,11 +316,6 @@
 </head>
 <body>
 <header class="topbar">
-  <h1><svg viewBox="128 128 256 256" role="img" aria-label="ScoreCard">
-    <rect x="128" y="128" width="256" height="256" rx="30" fill="currentColor"/>
-    <path d="M256 128v256M128 213h256M128 299h256" stroke="var(--topbar)" stroke-width="14"/>
-    <path d="M168 171h48M296 171h48M168 256h48M296 256h24M168 341h24M296 341h48" stroke="var(--topbar)" stroke-width="22" stroke-linecap="round"/>
-  </svg></h1>
   <button type="button" class="raised" id="reset">Reset</button>
 </header>
 <main class="stage">
