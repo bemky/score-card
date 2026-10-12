@@ -649,8 +649,17 @@ for (const type of ['mousedown', 'touchstart']) {
 // iOS doesn't blur an input when tapping blank space, so close the keypad explicitly
 document.addEventListener('pointerdown', (e) => {
   const a = document.activeElement;
-  if (a?.dataset?.score && !e.target.closest('#keypad, input')) a.blur();
+  if (!a?.dataset?.score || e.target.closest('#keypad, input')) return;
+  // Buttons: closing the keypad now would resize/re-center the card mid-tap and the
+  // click would miss. Keep the cell (and layout) as-is; the click handler below closes it.
+  if (e.target.closest('button')) { e.preventDefault(); return; }
+  a.blur();
 });
+// capture phase: runs before the button's own click handler
+document.addEventListener('click', (e) => {
+  const a = document.activeElement;
+  if (a?.dataset?.score && e.target.closest('button') && !e.target.closest('#keypad')) a.blur();
+}, true);
 
 sheet.addEventListener('click', async (e) => {
   const btn = e.target.closest('button');
