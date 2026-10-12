@@ -112,6 +112,7 @@
   }
   .row > * { border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); min-width: 0; }
   .row > :last-child { border-right: 0; }
+  .row[data-rid]:first-child > * { border-top: 1px solid var(--line); }
 
   /* footer: totals line on top, player names below; two rows shared by every column */
   .foot {
@@ -129,10 +130,6 @@
   .foot .corner {
     z-index: 4; display: grid; grid-template-rows: subgrid; align-items: center; justify-items: center;
     background: var(--head); color: var(--ink); font-size: 26px;
-  }
-  .foot .corner .signbtn {
-    width: 32px; height: 38px; padding: 0; border-radius: 8px; border: 1.5px solid var(--brand); cursor: pointer;
-    background: var(--bg); color: var(--brand); font: 700 20px/1 system-ui, sans-serif;
   }
   .num { padding: 0; }
 
@@ -160,6 +157,8 @@
     font: inherit; font-size: 22px; text-align: right; color: inherit; background: transparent;
     border: 0; border-radius: 0; outline: none;
   }
+  .cell input { appearance: textfield; -moz-appearance: textfield; }
+  .cell input::-webkit-inner-spin-button, .cell input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
   .cell input:focus { background: color-mix(in srgb, var(--brand) 16%, transparent); box-shadow: inset 0 0 0 2px var(--brand); }
   .namecell:focus-within { box-shadow: inset 0 0 0 2px var(--brand); }
 
@@ -170,7 +169,6 @@
     border-bottom: 1px solid var(--line);
   }
   .total.lead { background: var(--lead); }
-  .signbtn[hidden] { display: none; }
 
   .addround { position: sticky; left: 0; width: 100vw; max-width: 100%; padding: 8px 12px; display: flex; }
   .addround button {
@@ -255,17 +253,12 @@ function el(tag, cls, attrs = {}) {
 const fmt = (n) => (Math.round(n * 1e6) / 1e6).toString().replace('-', '−');
 const hasScores = (r) => Object.keys(r.scores).length > 0;
 
-// Clean raw text typed into a score box; returns [text, number|null].
-function clean(raw) {
-  let t = raw.replace(/−/g, '-').replace(/,/g, '.').replace(/[^0-9.\-]/g, '');
-  const neg = t.startsWith('-');
-  t = t.replace(/-/g, '');
-  const i = t.indexOf('.');
-  if (i >= 0) t = t.slice(0, i + 1) + t.slice(i + 1).replace(/\./g, '');
-  t = t.slice(0, 9);
-  const text = (neg ? '-' : '') + t;
-  const num = /^-?(\d+\.?\d*|\.\d+)$/.test(text) ? parseFloat(text) : null;
-  return [text, num];
+// Read a number input; the browser reports '' for anything that isn't a number.
+const MAX_DIGITS = 9;
+function readScore(inp) {
+  if (inp.value.replace(/[-.]/g, '').length > MAX_DIGITS) inp.value = inp.value.slice(0, MAX_DIGITS + 1);
+  const n = inp.value === '' ? NaN : Number(inp.value);
+  return Number.isFinite(n) ? n : null;
 }
 
 // ---------- rendering ----------
@@ -276,11 +269,7 @@ function setCols() { sheet.style.setProperty('--n', state.players.length); }
 function footRow() {
   const row = el('div', 'row foot');
   const corner = el('div', 'corner');
-  const sign = el('button', 'signbtn', { type: 'button', 'aria-label': 'Flip sign', hidden: '' });
-  sign.id = 'sign';
-  sign.textContent = '±';
-  sign.hidden = !document.activeElement?.dataset?.score;
-  corner.append(Object.assign(el('span'), { textContent: '=' }), sign);
+  corner.append(Object.assign(el('span'), { textContent: '=' }));
   row.append(corner);
   totalEls = {};
   for (const p of state.players) {
@@ -317,7 +306,7 @@ function roundRow(r, idx) {
   row.append(num);
   for (const p of state.players) {
     const c = el('div', 'cell');
-    const inp = el('input', '', { type: 'text', inputmode: 'decimal', enterkeyhint: 'next', autocomplete: 'off', 'aria-label': `Round ${idx + 1}, ${p.name || 'player'}` });
+    const inp = el('input', '', { type: 'number', step: 'any', enterkeyhint: 'next', autocomplete: 'off', 'aria-label': `Round ${idx + 1}, ${p.name || 'player'}` });
     inp.dataset.rid = r.id;
     inp.dataset.pid = p.id;
     inp.dataset.score = '1';
@@ -405,8 +394,7 @@ sheet.addEventListener('input', (e) => {
     return;
   }
   if (!t.dataset.score) return;
-  const [text, num] = clean(t.value);
-  if (t.value !== text) t.value = text;
+  const num = readScore(t);
   const ri = state.rounds.findIndex((r) => r.id === t.dataset.rid);
   if (ri < 0) return;
   const r = state.rounds[ri];
@@ -436,31 +424,10 @@ sheet.addEventListener('keydown', (e) => {
 sheet.addEventListener('focusin', (e) => {
   const t = e.target;
   if (t.tagName !== 'INPUT') return;
-  if (t.dataset.score) $('sign').hidden = false;
   t.addEventListener('mouseup', (ev) => ev.preventDefault(), { once: true });
-  setTimeout(() => t.setSelectionRange(0, t.value.length), 0);
+  // number inputs don't support setSelectionRange; select() works for both
+  setTimeout(() => t.select(), 0);
 });
-sheet.addEventListener('focusout', (e) => {
-  if (e.target.dataset.score) setTimeout(() => {
-    if (!document.activeElement?.dataset?.score) $('sign').hidden = true;
-  }, 0);
-});
-
-// flip sign of the focused score without stealing focus
-sheet.addEventListener('pointerdown', (e) => {
-  if (!e.target.closest('#sign')) return;
-  e.preventDefault();
-  const a = document.activeElement;
-  if (a?.dataset?.score) {
-    const [text] = clean(a.value.startsWith('-') ? a.value.slice(1) : '-' + a.value);
-    a.value = text;
-    a.dispatchEvent(new Event('input', { bubbles: true }));
-  }
-});
-// Safari can still move focus on mousedown/touchstart, so block those too
-for (const type of ['mousedown', 'touchstart']) {
-  sheet.addEventListener(type, (e) => { if (e.target.closest('#sign')) e.preventDefault(); }, { passive: false });
-}
 
 sheet.addEventListener('click', async (e) => {
   const btn = e.target.closest('button');
