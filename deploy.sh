@@ -13,7 +13,7 @@ source ./deploy.env
 : "${DEPLOY_HOST:?set DEPLOY_HOST in deploy.env}"
 : "${DEPLOY_PATH:?set DEPLOY_PATH in deploy.env}"
 
-rsync -avz --delete --chmod=D755,F644 \
+rsync -avz --delete \
   --include='index.html' \
   --include='manifest.webmanifest' \
   --include='icon.svg' \
@@ -21,3 +21,8 @@ rsync -avz --delete --chmod=D755,F644 \
   --exclude='*' \
   "$@" \
   ./ "$DEPLOY_HOST:${DEPLOY_PATH%/}/"
+
+# Make sure the web server can read everything (macOS openrsync lacks --chmod)
+if [[ " $* " != *" --dry-run "* && " $* " != *" -n "* ]]; then
+  ssh "$DEPLOY_HOST" "find '${DEPLOY_PATH%/}' -mindepth 1 -user \"\$(id -un)\" -exec chmod u=rwX,go=rX {} +"
+fi
