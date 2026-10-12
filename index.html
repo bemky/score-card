@@ -157,8 +157,6 @@
     font: inherit; font-size: 22px; text-align: right; color: inherit; background: transparent;
     border: 0; border-radius: 0; outline: none;
   }
-  .cell input { appearance: textfield; -moz-appearance: textfield; }
-  .cell input::-webkit-inner-spin-button, .cell input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
   .cell input:focus { background: color-mix(in srgb, var(--brand) 16%, transparent); box-shadow: inset 0 0 0 2px var(--brand); }
   .namecell:focus-within { box-shadow: inset 0 0 0 2px var(--brand); }
 
@@ -175,6 +173,26 @@
     flex: 1; min-height: 44px; border: 1.5px dashed var(--brand); border-radius: 12px; background: transparent;
     color: var(--brand); font-size: 20px; cursor: pointer;
   }
+
+  /* on-page number pad for score cells (replaces the iOS keyboard) */
+  .keypad {
+    flex: none;
+    display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: 52px; gap: 6px;
+    padding: 6px max(6px, env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) max(6px, env(safe-area-inset-left));
+    background: var(--line);
+    touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+  }
+  .keypad[hidden] { display: none; }
+  .keypad button {
+    border: 0; border-radius: 10px; background: var(--bg); color: var(--ink);
+    font: 400 26px/1 system-ui, -apple-system, sans-serif; cursor: pointer;
+    box-shadow: 0 1px 0 rgba(0,0,0,.2);
+  }
+  .keypad button.fn { background: var(--head); color: var(--brand); }
+  .keypad button:active { background: var(--lead); }
+  .keypad .enter { grid-row: span 2; background: var(--brand); color: var(--brand-ink); }
+  .keypad .enter:active { background: var(--brand); filter: brightness(1.15); }
+  body.kp-open .foot { padding-bottom: 0; }
 
   dialog {
     width: min(92vw, 360px); padding: 20px; border: 0; border-radius: 16px; background: var(--bg); color: var(--ink);
@@ -201,6 +219,23 @@
   <button type="button" id="reset">Reset</button>
 </header>
 <main class="scroller" id="scroller"><div class="sheet" id="sheet"></div></main>
+<div class="keypad" id="keypad" role="group" aria-label="Number pad" hidden>
+  <button type="button" data-key="7">7</button>
+  <button type="button" data-key="8">8</button>
+  <button type="button" data-key="9">9</button>
+  <button type="button" class="fn" data-key="back" aria-label="Delete">⌫</button>
+  <button type="button" data-key="4">4</button>
+  <button type="button" data-key="5">5</button>
+  <button type="button" data-key="6">6</button>
+  <button type="button" class="fn" data-key="right" aria-label="Next player">→</button>
+  <button type="button" data-key="1">1</button>
+  <button type="button" data-key="2">2</button>
+  <button type="button" data-key="3">3</button>
+  <button type="button" class="enter" data-key="down" aria-label="Next round">↵</button>
+  <button type="button" class="fn" data-key="sign" aria-label="Flip sign">±</button>
+  <button type="button" data-key="0">0</button>
+  <button type="button" class="fn" data-key=".">.</button>
+</div>
 <dialog id="dlg">
   <h2 id="dlg-title"></h2>
   <p id="dlg-text"></p>
@@ -253,12 +288,18 @@ function el(tag, cls, attrs = {}) {
 const fmt = (n) => (Math.round(n * 1e6) / 1e6).toString().replace('-', '−');
 const hasScores = (r) => Object.keys(r.scores).length > 0;
 
-// Read a number input; the browser reports '' for anything that isn't a number.
+// Clean raw text in a score box (keypad or hardware keyboard); returns [text, number|null].
 const MAX_DIGITS = 9;
-function readScore(inp) {
-  if (inp.value.replace(/[-.]/g, '').length > MAX_DIGITS) inp.value = inp.value.slice(0, MAX_DIGITS + 1);
-  const n = inp.value === '' ? NaN : Number(inp.value);
-  return Number.isFinite(n) ? n : null;
+function clean(raw) {
+  let t = raw.replace(/−/g, '-').replace(/,/g, '.').replace(/[^0-9.\-]/g, '');
+  const neg = t.startsWith('-');
+  t = t.replace(/-/g, '');
+  const i = t.indexOf('.');
+  if (i >= 0) t = t.slice(0, i + 1) + t.slice(i + 1).replace(/\./g, '');
+  t = t.slice(0, MAX_DIGITS);
+  const text = (neg ? '-' : '') + t;
+  const num = /^-?(\d+\.?\d*|\.\d+)$/.test(text) ? parseFloat(text) : null;
+  return [text, num];
 }
 
 // ---------- rendering ----------
@@ -306,7 +347,7 @@ function roundRow(r, idx) {
   row.append(num);
   for (const p of state.players) {
     const c = el('div', 'cell');
-    const inp = el('input', '', { type: 'number', step: 'any', enterkeyhint: 'next', autocomplete: 'off', 'aria-label': `Round ${idx + 1}, ${p.name || 'player'}` });
+    const inp = el('input', '', { type: 'text', inputmode: 'none', autocomplete: 'off', 'aria-label': `Round ${idx + 1}, ${p.name || 'player'}` });
     inp.dataset.rid = r.id;
     inp.dataset.pid = p.id;
     inp.dataset.score = '1';
@@ -381,10 +422,17 @@ function ask(title, text, actions) {
 }
 
 // ---------- events ----------
+// → : next player in the round, wrapping to the next round
 function nextInput(from) {
   const all = [...sheet.querySelectorAll('input[data-score]')];
   return all[all.indexOf(from) + 1] || null;
 }
+// ↵ : same player, next round
+function belowInput(from) {
+  const row = from.closest('.row')?.nextElementSibling;
+  return row?.querySelector(`input[data-score][data-pid="${from.dataset.pid}"]`) || null;
+}
+const go = (from, to) => { if (to) { to.focus(); to.scrollIntoView({ block: 'nearest' }); } else from.blur(); };
 
 sheet.addEventListener('input', (e) => {
   const t = e.target;
@@ -394,7 +442,8 @@ sheet.addEventListener('input', (e) => {
     return;
   }
   if (!t.dataset.score) return;
-  const num = readScore(t);
+  const [text, num] = clean(t.value);
+  if (t.value !== text) t.value = text;
   const ri = state.rounds.findIndex((r) => r.id === t.dataset.rid);
   if (ri < 0) return;
   const r = state.rounds[ri];
@@ -402,9 +451,10 @@ sheet.addEventListener('input', (e) => {
   if (num !== null && ri === state.rounds.length - 1) {
     const nr = newRound();
     state.rounds.push(nr);
-    const atBottom = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 8;
-    sheet.querySelector('.addround').before(roundRow(nr, state.rounds.length - 1));
-    if (atBottom) scrollToBottom('smooth');
+    const row = roundRow(nr, state.rounds.length - 1);
+    sheet.querySelector('.addround').before(row);
+    // reveal the new round just above the footer (scroll-padding accounts for it)
+    row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }
   save();
   updateTotals();
@@ -414,10 +464,8 @@ sheet.addEventListener('keydown', (e) => {
   if (e.key !== 'Enter') return;
   e.preventDefault();
   const t = e.target;
-  if (t.dataset.score) {
-    const n = nextInput(t);
-    if (n) n.focus(); else t.blur();
-  } else t.blur();
+  if (t.dataset.score) go(t, belowInput(t));
+  else t.blur();
 });
 
 // select the whole value on focus so typing replaces it
@@ -425,8 +473,62 @@ sheet.addEventListener('focusin', (e) => {
   const t = e.target;
   if (t.tagName !== 'INPUT') return;
   t.addEventListener('mouseup', (ev) => ev.preventDefault(), { once: true });
-  // number inputs don't support setSelectionRange; select() works for both
   setTimeout(() => t.select(), 0);
+  if (t.dataset.score && keypad.hidden) {
+    keypad.hidden = false;
+    document.body.classList.add('kp-open');
+    // the keypad shrinks the scroller; keep the active cell in view
+    requestAnimationFrame(() => t.scrollIntoView({ block: 'nearest' }));
+  }
+});
+sheet.addEventListener('focusout', (e) => {
+  if (!e.target.dataset.score) return;
+  setTimeout(() => {
+    if (document.activeElement?.dataset?.score) return;
+    keypad.hidden = true;
+    document.body.classList.remove('kp-open');
+  }, 0);
+});
+
+// ---------- keypad ----------
+const keypad = $('keypad');
+function press(k) {
+  const a = document.activeElement;
+  if (!a?.dataset?.score) return;
+  if (k === 'right') return go(a, nextInput(a));
+  if (k === 'down') return go(a, belowInput(a));
+  let v = a.value, s = a.selectionStart ?? v.length, e = a.selectionEnd ?? v.length;
+  if (k === 'back') {
+    if (s === e && s > 0) s--;
+    v = v.slice(0, s) + v.slice(e);
+  } else if (k === 'sign') {
+    const neg = v.startsWith('-');
+    v = neg ? v.slice(1) : '-' + v;
+    s = e = Math.max(0, e + (neg ? -1 : 1));
+  } else {
+    v = v.slice(0, s) + k + v.slice(e);
+    s++;
+  }
+  a.value = v;
+  a.setSelectionRange(s, s);
+  a.dispatchEvent(new Event('input', { bubbles: true }));
+  // clean() may have shortened the value; keep the caret inside it
+  const c = Math.min(s, a.value.length);
+  a.setSelectionRange(c, c);
+}
+// act on pointerdown and swallow the focus change so the cell stays active
+keypad.addEventListener('pointerdown', (e) => {
+  e.preventDefault();
+  const b = e.target.closest('button[data-key]');
+  if (b) press(b.dataset.key);
+});
+for (const type of ['mousedown', 'touchstart']) {
+  keypad.addEventListener(type, (e) => e.preventDefault(), { passive: false });
+}
+// iOS doesn't blur an input when tapping blank space, so close the keypad explicitly
+document.addEventListener('pointerdown', (e) => {
+  const a = document.activeElement;
+  if (a?.dataset?.score && !e.target.closest('#keypad, input')) a.blur();
 });
 
 sheet.addEventListener('click', async (e) => {
