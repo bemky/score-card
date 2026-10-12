@@ -34,6 +34,9 @@
     --col: 76px;
     --side: 36px;
     --end: 44px;
+    --total-h: 40px;
+    --name-h: 44px;
+    --foot-h: calc(var(--total-h) + var(--name-h));
     --row-h: 48px;
   }
   @media (prefers-color-scheme: dark) {
@@ -73,14 +76,12 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: env(safe-area-inset-top) max(12px, env(safe-area-inset-right)) 0 max(12px, env(safe-area-inset-left));
-    min-height: calc(52px + env(safe-area-inset-top));
+    padding: calc(env(safe-area-inset-top) + 12px) max(12px, env(safe-area-inset-right)) 12px max(12px, env(safe-area-inset-left));
     background: var(--topbar);
     color: var(--topbar-ink);
   }
   .topbar h1 { margin: 0; display: flex; }
   .topbar h1 svg { width: 34px; height: 34px; display: block; }
-  .tools { display: flex; gap: 8px; }
   .topbar button {
     min-height: 44px; min-width: 44px; padding: 0 14px;
     background: transparent; border: 1.5px solid currentColor; border-radius: 10px; cursor: pointer;
@@ -94,12 +95,15 @@
     -webkit-overflow-scrolling: touch;
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
-    scroll-padding: 76px var(--end) 16px var(--side);
+    scroll-padding: 16px var(--end) calc(var(--foot-h) + 16px) var(--side);
   }
+  /* rows are packed against the bottom so the newest round sits just above the footer */
   .sheet {
     font-family: "Gochi Hand", "Comic Sans MS", "Chalkboard SE", cursive;
-    font-synthesis: none; width: calc(var(--side) + var(--end) + var(--n) * var(--col)); min-width: 100%; min-height: 100%; display: flex; flex-direction: column; }
-  .sheet { padding-bottom: env(safe-area-inset-bottom); }
+    font-synthesis: none;
+    width: calc(var(--side) + var(--end) + var(--n) * var(--col)); min-width: 100%; min-height: 100%;
+    display: flex; flex-direction: column; justify-content: flex-end;
+  }
   .row {
     display: grid;
     grid-template-columns: var(--side) repeat(var(--n), minmax(var(--col), 1fr)) var(--end);
@@ -109,33 +113,45 @@
   .row > * { border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); min-width: 0; }
   .row > :last-child { border-right: 0; }
 
-  .head { position: sticky; top: 0; z-index: 3; background: var(--head); }
-  .head > * { background: var(--head); border-bottom: 2px solid var(--brand); }
+  /* footer: totals line on top, player names below; two rows shared by every column */
+  .foot {
+    position: sticky; bottom: 0; z-index: 3;
+    grid-template-rows: var(--total-h) var(--name-h);
+    padding-bottom: env(safe-area-inset-bottom);
+    background: var(--head); border-top: 2px solid var(--brand);
+  }
+  .foot > * { background: var(--head); border-bottom: 0; grid-row: 1 / -1; }
   .corner, .num {
     position: sticky; left: 0; z-index: 2;
     display: flex; align-items: center; justify-content: center;
     background: var(--bg); color: var(--muted); font-size: 20px;
   }
-  .head .corner { background: var(--head); z-index: 4; flex-direction: column; justify-content: space-evenly; }
-  .head .corner span:last-child { color: var(--ink); font-size: 22px; }
+  .foot .corner {
+    z-index: 4; display: grid; grid-template-rows: subgrid; align-items: center; justify-items: center;
+    background: var(--head); color: var(--ink); font-size: 26px;
+  }
+  .foot .corner .signbtn {
+    width: 32px; height: 38px; padding: 0; border-radius: 8px; border: 1.5px solid var(--brand); cursor: pointer;
+    background: var(--bg); color: var(--brand); font: 700 20px/1 system-ui, sans-serif;
+  }
   .num { padding: 0; }
 
-  .namecell { display: grid; grid-template-columns: 1fr auto; align-items: center; }
+  .namecell { display: grid; grid-template-columns: 1fr auto; grid-template-rows: subgrid; align-items: center; }
   .namecell input {
-    min-width: 0; width: 100%; height: 36px; padding: 0 0 0 8px;
+    grid-row: 2; min-width: 0; width: 100%; height: var(--name-h); padding: 0 0 0 8px;
     font: inherit; font-size: 20px; color: inherit; background: transparent; border: 0; border-radius: 0; outline: none;
     text-overflow: ellipsis;
   }
-  .namecell .iconbtn { height: 36px; }
+  .namecell .iconbtn { grid-row: 2; height: var(--name-h); }
   .iconbtn {
     flex: none; width: 28px; height: 44px; display: grid; place-items: center;
     background: transparent; border: 0; color: var(--muted); font-size: 20px; line-height: 1; cursor: pointer;
   }
   .iconbtn:active { color: var(--danger); }
   .rowend { display: grid; place-items: center; background: var(--bg); }
-  .head .rowend { background: var(--head); }
+  .foot .rowend { display: grid; grid-template-rows: subgrid; place-items: center; background: var(--head); }
   .addp {
-    width: 40px; height: 44px; border-radius: 10px; border: 1.5px dashed var(--brand); cursor: pointer;
+    grid-row: 2; width: calc(var(--name-h) - 4px); aspect-ratio: 1; padding: 0; border-radius: 10px; border: 1.5px dashed var(--brand); cursor: pointer;
     background: transparent; color: var(--brand); font-size: 24px; line-height: 1;
   }
 
@@ -148,17 +164,17 @@
   .namecell:focus-within { box-shadow: inset 0 0 0 2px var(--brand); }
 
   .total {
-    grid-column: 1 / -1; align-self: stretch;
+    grid-column: 1 / -1; grid-row: 1; align-self: stretch;
     display: flex; align-items: center; justify-content: flex-end;
-    min-height: 36px; padding: 0 10px; font-size: 26px; line-height: 1; background: var(--foot);
+    padding: 0 10px; font-size: 26px; line-height: 1; background: var(--foot);
+    border-bottom: 1px solid var(--line);
   }
   .total.lead { background: var(--lead); }
-  .topbar .signbtn { font-size: 20px; font-weight: 700; }
   .signbtn[hidden] { display: none; }
 
-  .addround { position: sticky; left: 0; width: 100vw; max-width: 100%; padding: 12px; display: flex; }
+  .addround { position: sticky; left: 0; width: 100vw; max-width: 100%; padding: 8px 12px; display: flex; }
   .addround button {
-    flex: 1; min-height: 48px; border: 1.5px dashed var(--brand); border-radius: 12px; background: transparent;
+    flex: 1; min-height: 44px; border: 1.5px dashed var(--brand); border-radius: 12px; background: transparent;
     color: var(--brand); font-size: 20px; cursor: pointer;
   }
 
@@ -184,10 +200,7 @@
     <path d="M256 128v256M128 213h256M128 299h256" stroke="var(--topbar)" stroke-width="14"/>
     <path d="M168 171h48M296 171h48M168 256h48M296 256h24M168 341h24M296 341h48" stroke="var(--topbar)" stroke-width="22" stroke-linecap="round"/>
   </svg></h1>
-  <div class="tools">
-    <button type="button" class="signbtn" id="sign" aria-label="Flip sign" hidden>±</button>
-    <button type="button" id="reset">Reset</button>
-  </div>
+  <button type="button" id="reset">Reset</button>
 </header>
 <main class="scroller" id="scroller"><div class="sheet" id="sheet"></div></main>
 <dialog id="dlg">
@@ -260,10 +273,14 @@ let totalEls = {};
 
 function setCols() { sheet.style.setProperty('--n', state.players.length); }
 
-function headRow() {
-  const row = el('div', 'row head');
+function footRow() {
+  const row = el('div', 'row foot');
   const corner = el('div', 'corner');
-  corner.append(Object.assign(el('span'), { textContent: '#' }), Object.assign(el('span'), { textContent: 'Σ' }));
+  const sign = el('button', 'signbtn', { type: 'button', 'aria-label': 'Flip sign', hidden: '' });
+  sign.id = 'sign';
+  sign.textContent = '±';
+  sign.hidden = !document.activeElement?.dataset?.score;
+  corner.append(Object.assign(el('span'), { textContent: '=' }), sign);
   row.append(corner);
   totalEls = {};
   for (const p of state.players) {
@@ -320,7 +337,6 @@ function roundRow(r, idx) {
 function render() {
   setCols();
   sheet.replaceChildren(
-    headRow(),
     ...state.rounds.map(roundRow),
     (() => {
       const w = el('div', 'addround');
@@ -330,9 +346,12 @@ function render() {
       w.append(b);
       return w;
     })(),
+    footRow(),
   );
   updateTotals();
 }
+
+const scrollToBottom = (behavior = 'auto') => scroller.scrollTo({ top: scroller.scrollHeight, behavior });
 
 function updateTotals() {
   const sums = {};
@@ -395,7 +414,9 @@ sheet.addEventListener('input', (e) => {
   if (num !== null && ri === state.rounds.length - 1) {
     const nr = newRound();
     state.rounds.push(nr);
+    const atBottom = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 8;
     sheet.querySelector('.addround').before(roundRow(nr, state.rounds.length - 1));
+    if (atBottom) scrollToBottom('smooth');
   }
   save();
   updateTotals();
@@ -426,8 +447,8 @@ sheet.addEventListener('focusout', (e) => {
 });
 
 // flip sign of the focused score without stealing focus
-const sign = $('sign');
-sign.addEventListener('pointerdown', (e) => {
+sheet.addEventListener('pointerdown', (e) => {
+  if (!e.target.closest('#sign')) return;
   e.preventDefault();
   const a = document.activeElement;
   if (a?.dataset?.score) {
@@ -438,7 +459,7 @@ sign.addEventListener('pointerdown', (e) => {
 });
 // Safari can still move focus on mousedown/touchstart, so block those too
 for (const type of ['mousedown', 'touchstart']) {
-  sign.addEventListener(type, (e) => e.preventDefault(), { passive: false });
+  sheet.addEventListener(type, (e) => { if (e.target.closest('#sign')) e.preventDefault(); }, { passive: false });
 }
 
 sheet.addEventListener('click', async (e) => {
@@ -447,11 +468,11 @@ sheet.addEventListener('click', async (e) => {
   if (btn.id === 'addPlayer') {
     state.players.push({ id: uid('p'), name: `Player ${state.players.length + 1}` });
     save(); render();
-    scroller.scrollTo({ left: scroller.scrollWidth, behavior: 'smooth' });
+    scroller.scrollTo({ left: scroller.scrollWidth, top: scroller.scrollHeight, behavior: 'smooth' });
   } else if (btn.id === 'addRound') {
     state.rounds.push(newRound());
     save(); render();
-    scroller.scrollTo({ top: scroller.scrollHeight, behavior: 'smooth' });
+    scrollToBottom('smooth');
   } else if (btn.dataset.removePlayer) {
     const id = btn.dataset.removePlayer;
     const p = state.players.find((q) => q.id === id);
@@ -485,10 +506,11 @@ $('reset').addEventListener('click', async () => {
   else if (v === 'over') state = defaultState();
   else return;
   save(); render();
-  scroller.scrollTo(0, 0);
+  scroller.scrollTo({ left: 0, top: scroller.scrollHeight });
 });
 
 render();
+scrollToBottom();
 </script>
 </body>
 </html>
