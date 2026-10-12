@@ -157,8 +157,13 @@
     background: transparent; border: 0; color: var(--muted); font-size: 20px; line-height: 1; cursor: pointer;
   }
   .iconbtn:active { color: var(--danger); }
-  .rowend { display: grid; place-items: center; background: var(--bg); }
-  .foot .rowend { display: grid; grid-template-rows: subgrid; place-items: center; background: var(--head); }
+  /* × and + stay pinned to the card's right edge while the grid scrolls sideways */
+  .rowend {
+    position: sticky; right: 0; z-index: 2;
+    display: grid; place-items: center; background: var(--bg);
+    box-shadow: inset 1px 0 var(--line);
+  }
+  .foot .rowend { z-index: 4; display: grid; grid-template-rows: subgrid; place-items: center; background: var(--head); }
   .addp {
     grid-row: 2; width: calc(var(--name-h) - 4px); aspect-ratio: 1; padding: 0; border-radius: 10px; border: 1.5px dashed var(--brand); cursor: pointer;
     background: transparent; color: var(--brand); font-size: 24px; line-height: 1;
