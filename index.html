@@ -31,7 +31,10 @@
     --foot: #e6f0e9;
     --lead: #d5ecdc;
     --danger: #b3261e;
-    --col: 76px;
+    --col: 72px;
+    --card-col: 110px;
+    --gap: 10px;
+    --stage: #e9eeea;
     --side: 36px;
     --end: 44px;
     --total-h: 40px;
@@ -46,6 +49,7 @@
       --topbar: #1d3b2a;
       --topbar-ink: #e8ece9;
       --bg: #121613;
+      --stage: #0a0d0b;
       --ink: #e8ece9;
       --muted: #94a09a;
       --line: #2b332e;
@@ -60,7 +64,7 @@
   /* solid brand color behind the status bar so iOS doesn't fade the header into white */
   html { background: var(--topbar); }
   body {
-    background: var(--bg);
+    background: var(--stage);
     color: var(--ink);
     font: 16px/1.3 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     font-variant-numeric: tabular-nums;
@@ -87,22 +91,32 @@
     background: transparent; border: 1.5px solid currentColor; border-radius: 10px; cursor: pointer;
   }
 
-  .scroller {
+  /* the stage centers the score card in the space between top bar and keypad */
+  .stage {
     flex: 1;
     min-height: 0;
+    display: grid; place-items: center;
+    grid-template: minmax(0, 1fr) / minmax(0, 1fr);
+    padding: var(--gap) max(var(--gap), env(safe-area-inset-right)) max(var(--gap), env(safe-area-inset-bottom)) max(var(--gap), env(safe-area-inset-left));
+  }
+  body.kp-open .stage { padding-bottom: var(--gap); }
+  /* the card hugs its content and scrolls internally once it fills the stage */
+  .scroller {
+    width: min(100%, calc(var(--side) + var(--end) + var(--n) * var(--card-col)));
+    max-height: 100%;
     overflow: auto;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
+    background: var(--bg);
+    border-radius: 16px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 6px 24px rgba(0,0,0,.12);
     scroll-padding: 16px var(--end) calc(var(--foot-h) + 16px) var(--side);
   }
-  /* rows are packed against the bottom so the newest round sits just above the footer */
   .sheet {
     font-family: "Gochi Hand", "Comic Sans MS", "Chalkboard SE", cursive;
     font-synthesis: none;
-    width: calc(var(--side) + var(--end) + var(--n) * var(--col)); min-width: 100%; min-height: 100%;
-    display: flex; flex-direction: column; justify-content: flex-end;
+    width: calc(var(--side) + var(--end) + var(--n) * var(--col)); min-width: 100%;
+    display: flex; flex-direction: column;
   }
   .row {
     display: grid;
@@ -112,13 +126,11 @@
   }
   .row > * { border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); min-width: 0; }
   .row > :last-child { border-right: 0; }
-  .row[data-rid]:first-child > * { border-top: 1px solid var(--line); }
 
   /* footer: totals line on top, player names below; two rows shared by every column */
   .foot {
     position: sticky; bottom: 0; z-index: 3;
     grid-template-rows: var(--total-h) var(--name-h);
-    padding-bottom: env(safe-area-inset-bottom);
     background: var(--head); border-top: 2px solid var(--brand);
   }
   .foot > * { background: var(--head); border-bottom: 0; grid-row: 1 / -1; }
@@ -168,7 +180,7 @@
   }
   .total.lead { background: var(--lead); }
 
-  .addround { position: sticky; left: 0; width: 100vw; max-width: 100%; padding: 8px 12px; display: flex; }
+  .addround { position: sticky; left: 0; width: var(--card-w, 100%); max-width: 100%; padding: 8px 12px; display: flex; }
   .addround button {
     flex: 1; min-height: 44px; border: 1.5px dashed var(--brand); border-radius: 12px; background: transparent;
     color: var(--brand); font-size: 20px; cursor: pointer;
@@ -192,7 +204,6 @@
   .keypad button:active { background: var(--lead); }
   .keypad .enter { grid-row: span 2; background: var(--brand); color: var(--brand-ink); }
   .keypad .enter:active { background: var(--brand); filter: brightness(1.15); }
-  body.kp-open .foot { padding-bottom: 0; }
 
   dialog {
     width: min(92vw, 360px); padding: 20px; border: 0; border-radius: 16px; background: var(--bg); color: var(--ink);
@@ -218,7 +229,7 @@
   </svg></h1>
   <button type="button" id="reset">Reset</button>
 </header>
-<main class="scroller" id="scroller"><div class="sheet" id="sheet"></div></main>
+<main class="stage"><div class="scroller" id="scroller"><div class="sheet" id="sheet"></div></div></main>
 <div class="keypad" id="keypad" role="group" aria-label="Number pad" hidden>
   <button type="button" data-key="7">7</button>
   <button type="button" data-key="8">8</button>
@@ -227,11 +238,11 @@
   <button type="button" data-key="4">4</button>
   <button type="button" data-key="5">5</button>
   <button type="button" data-key="6">6</button>
-  <button type="button" class="fn" data-key="right" aria-label="Next player">→</button>
+  <button type="button" class="fn" data-key="down" aria-label="Next round">↵</button>
   <button type="button" data-key="1">1</button>
   <button type="button" data-key="2">2</button>
   <button type="button" data-key="3">3</button>
-  <button type="button" class="enter" data-key="down" aria-label="Next round">↵</button>
+  <button type="button" class="enter" data-key="right" aria-label="Next player">→</button>
   <button type="button" class="fn" data-key="sign" aria-label="Flip sign">±</button>
   <button type="button" data-key="0">0</button>
   <button type="button" class="fn" data-key=".">.</button>
@@ -305,7 +316,9 @@ function clean(raw) {
 // ---------- rendering ----------
 let totalEls = {};
 
-function setCols() { sheet.style.setProperty('--n', state.players.length); }
+function setCols() { scroller.style.setProperty('--n', state.players.length); }
+// keep "+ Add round" as wide as the visible card while the grid scrolls sideways
+new ResizeObserver(() => scroller.style.setProperty('--card-w', scroller.clientWidth + 'px')).observe(scroller);
 
 function footRow() {
   const row = el('div', 'row foot');
