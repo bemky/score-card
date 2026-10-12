@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ScoreCard</title>
-<meta name="theme-color" content="#2e7d4f">
+<meta name="theme-color" content="#1f5236">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -17,58 +17,67 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gochi+Hand&display=swap">
 <style>
+  /* Notepad-on-felt theme. All textures are inline SVG data URIs rendered once as images. */
   :root {
-    color-scheme: light dark;
+    color-scheme: light;
     --brand: #2e7d4f;
-    --brand-ink: #ffffff;
-    --topbar: #2e7d4f;
-    --topbar-ink: #ffffff;
-    --bg: #ffffff;
-    --ink: #1b1f1d;
-    --muted: #6b746f;
-    --line: #dfe4e1;
-    --head: #f1f5f2;
-    --foot: #e6f0e9;
-    --lead: #d5ecdc;
-    --danger: #b3261e;
+    --brand-dark: #1f5a3a;
+    --felt: #2a6a46;
+    --topbar: #1f5236;
+    --cream: #f3ead6;
+    --paper: #f7f1e4;
+    --paper-dim: #ece3cf;
+    --ink: #3b3732;
+    --muted: #7a7166;
+    --danger: #a3271f;
     /* column fits a 4ch name (20px text = 5ch at the grid's 16px) + 8px padding + 28px × */
     --col: max(72px, calc(5ch + 36px));
     --card-col: 110px;
     --gap: 10px;
     --btn-gap: 6px;
-    --stage: #e9eeea;
+    --ring-up: 20px;          /* how far the spiral rings poke above the card */
+    --bind-h: 40px;           /* paper strip at the top of the card holding the punched holes */
     --side: 36px;
     --end: 44px;
     --total-h: 40px;
     --name-h: 44px;
     --foot-h: calc(var(--total-h) + var(--name-h));
     --row-h: 48px;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --brand: #4caf78;
-      --brand-ink: #08150d;
-      --topbar: #1d3b2a;
-      --topbar-ink: #e8ece9;
-      --bg: #121613;
-      --stage: #0a0d0b;
-      --ink: #e8ece9;
-      --muted: #94a09a;
-      --line: #2b332e;
-      --head: #1b221d;
-      --foot: #1f2b23;
-      --lead: #25503a;
-      --danger: #f2877f;
-    }
+    --hand: "Gochi Hand", "Comic Sans MS", "Chalkboard SE", cursive;
+
+    /* textures */
+    --grain-dark: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .6 0'/></filter><rect width='180' height='180' filter='url(%23n)' opacity='.38'/></svg>");
+    --grain-paper: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.55' numOctaves='4' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .35 0 0 0 0 .28 0 0 0 0 .18 0 0 0 .5 0'/></filter><rect width='220' height='220' filter='url(%23n)' opacity='.13'/></svg>");
+    --paper-bg: var(--grain-paper) var(--paper);
+
+    /* hand-drawn pencil lines: 3 horizontal + 3 vertical variants, cycled by row/column */
+    --h1: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 6' preserveAspectRatio='none'><filter id='g'><feTurbulence baseFrequency='.9' seed='2'/><feDisplacementMap in='SourceGraphic' scale='1.4'/></filter><path d='M-2 3.3C40 2.5 80 3.9 120 3S180 3.4 202 2.7' fill='none' stroke='%233b3732' stroke-opacity='.55' stroke-width='1.3' vector-effect='non-scaling-stroke' filter='url(%23g)'/></svg>");
+    --h2: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 6' preserveAspectRatio='none'><filter id='g'><feTurbulence baseFrequency='.9' seed='5'/><feDisplacementMap in='SourceGraphic' scale='1.4'/></filter><path d='M-2 2.6C30 3.4 70 2.2 110 3.1S170 2.4 202 3.4' fill='none' stroke='%233b3732' stroke-opacity='.5' stroke-width='1.2' vector-effect='non-scaling-stroke' filter='url(%23g)'/></svg>");
+    --h3: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 6' preserveAspectRatio='none'><filter id='g'><feTurbulence baseFrequency='.9' seed='9'/><feDisplacementMap in='SourceGraphic' scale='1.4'/></filter><path d='M-2 3C50 3.6 90 2.4 150 3.2S190 2.8 202 3' fill='none' stroke='%233b3732' stroke-opacity='.58' stroke-width='1.25' vector-effect='non-scaling-stroke' filter='url(%23g)'/></svg>");
+    --v1: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 6 60' preserveAspectRatio='none'><filter id='g'><feTurbulence baseFrequency='.9' seed='4'/><feDisplacementMap in='SourceGraphic' scale='1.4'/></filter><path d='M3 -2C2.3 15 3.8 30 2.8 45S3.3 58 3.1 62' fill='none' stroke='%233b3732' stroke-opacity='.55' stroke-width='1.3' vector-effect='non-scaling-stroke' filter='url(%23g)'/></svg>");
+    --v2: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 6 60' preserveAspectRatio='none'><filter id='g'><feTurbulence baseFrequency='.9' seed='7'/><feDisplacementMap in='SourceGraphic' scale='1.4'/></filter><path d='M2.7 -2C3.5 18 2.4 34 3.3 48S2.8 58 3 62' fill='none' stroke='%233b3732' stroke-opacity='.5' stroke-width='1.2' vector-effect='non-scaling-stroke' filter='url(%23g)'/></svg>");
+    --v3: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 6 60' preserveAspectRatio='none'><filter id='g'><feTurbulence baseFrequency='.9' seed='11'/><feDisplacementMap in='SourceGraphic' scale='1.4'/></filter><path d='M3.2 -2C2.6 12 3.6 28 2.9 40S3.1 56 2.8 62' fill='none' stroke='%233b3732' stroke-opacity='.58' stroke-width='1.25' vector-effect='non-scaling-stroke' filter='url(%23g)'/></svg>");
+    /* heavier double-ish stroke separating the rounds from the totals */
+    --h-heavy: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 6' preserveAspectRatio='none'><filter id='g'><feTurbulence baseFrequency='.9' seed='13'/><feDisplacementMap in='SourceGraphic' scale='1.6'/></filter><g fill='none' stroke='%233b3732' vector-effect='non-scaling-stroke' filter='url(%23g)'><path d='M-2 2.6C60 2 120 3.2 202 2.4' stroke-opacity='.75' stroke-width='1.8' vector-effect='non-scaling-stroke'/><path d='M-2 3.6C70 3.9 140 3 202 3.7' stroke-opacity='.4' stroke-width='1' vector-effect='non-scaling-stroke'/></g></svg>");
+    /* pencil loop drawn around the leading total */
+    --circle: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 44' preserveAspectRatio='none'><filter id='g'><feTurbulence baseFrequency='.8' seed='3'/><feDisplacementMap in='SourceGraphic' scale='1.5'/></filter><path d='M70 6C40 1 8 8 5 22S30 42 55 40 97 32 95 19 72 3 48 5' fill='none' stroke='%232e7d4f' stroke-opacity='.85' stroke-width='1.8' stroke-linecap='round' vector-effect='non-scaling-stroke' filter='url(%23g)'/></svg>");
+    /* green pencil scribble fill for "+ Add round" */
+    --hatch: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='44'><filter id='g'><feTurbulence baseFrequency='.7' seed='6'/><feDisplacementMap in='SourceGraphic' scale='2.2'/></filter><g stroke='%232e7d4f' stroke-width='1.5' stroke-linecap='round' fill='none' filter='url(%23g)'><path d='M-6 46L22-2M4 47L33-3M15 46L44-2M27 47L55-3M38 46L66-2M49 47L77-3M61 46L89-2M72 47L100-3M83 46L111-2M95 47L123-3M106 46L134-2' stroke-opacity='.26'/><path d='M-1 46L27-2M21 47L50-3M44 46L72-2M66 47L95-3M89 46L117-2' stroke-opacity='.16'/></g></svg>");
+    /* one spiral coil (two wires) dropping into a punched hole; tiled along the card top */
+    --ring: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='44' height='62' viewBox='0 0 44 62'><defs><linearGradient id='m' x1='0' x2='1'><stop offset='0' stop-color='%235a5a5a'/><stop offset='.35' stop-color='%23e9e9e9'/><stop offset='.55' stop-color='%23ffffff'/><stop offset='.8' stop-color='%23a9a9a9'/><stop offset='1' stop-color='%234a4a4a'/></linearGradient><radialGradient id='h' cx='.5' cy='.35' r='.65'><stop offset='0' stop-color='%230e2619'/><stop offset='.75' stop-color='%23173f29'/><stop offset='1' stop-color='%23356b4c'/></radialGradient></defs><ellipse cx='22' cy='48' rx='10' ry='8.5' fill='url(%23h)'/><ellipse cx='22' cy='49.5' rx='10' ry='7' fill='none' stroke='%23fff' stroke-opacity='.35' stroke-width='1'/><g stroke='%23383838' stroke-width='.7'><rect x='13' y='2' width='7' height='50' rx='3.5' fill='url(%23m)'/><rect x='24' y='2' width='7' height='50' rx='3.5' fill='url(%23m)'/></g><ellipse cx='22' cy='52' rx='9' ry='3' fill='%230e2619' opacity='.55'/></svg>");
   }
   * { box-sizing: border-box; }
   html, body { height: 100%; margin: 0; overflow: hidden; }
-  /* solid brand color behind the status bar so iOS doesn't fade the header into white */
+  /* solid green behind the status bar so iOS doesn't fade the header */
   html { background: var(--topbar); }
   body {
-    background: var(--stage);
+    background:
+      radial-gradient(120% 80% at 50% 40%, transparent 40%, rgba(0,0,0,.35) 100%),
+      var(--grain-dark),
+      linear-gradient(180deg, #2f7550, var(--felt) 45%, #245c3d);
     color: var(--ink);
-    font: 16px/1.3 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font: 18px/1.3 var(--hand);
+    font-synthesis: none;
     font-variant-numeric: tabular-nums;
     display: flex;
     flex-direction: column;
@@ -76,47 +85,66 @@
     -webkit-text-size-adjust: 100%;
   }
   button { font: inherit; color: inherit; }
+
+  /* top bar: a darker felt panel with a rounded lower edge */
   .topbar {
     flex: none;
     position: sticky; top: 0; z-index: 10;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    display: flex; align-items: center; justify-content: space-between;
     padding: calc(env(safe-area-inset-top) + 12px) max(12px, env(safe-area-inset-right)) 12px max(12px, env(safe-area-inset-left));
-    background: var(--topbar);
-    color: var(--topbar-ink);
+    background: var(--grain-dark), linear-gradient(180deg, #1c4b32, var(--topbar));
+    color: var(--cream);
+    border-radius: 0 0 16px 16px;
+    box-shadow: inset 0 0 0 2px rgba(255,255,255,.06), inset 0 -3px 0 rgba(0,0,0,.25), 0 4px 14px rgba(0,0,0,.35);
   }
   .topbar h1 { margin: 0; display: flex; }
-  .topbar h1 svg { width: 34px; height: 34px; display: block; }
-  .topbar button {
-    min-height: 44px; min-width: 44px; padding: 0 14px;
-    background: transparent; border: 1.5px solid currentColor; border-radius: 10px; cursor: pointer;
+  .topbar h1 svg { width: 38px; height: 38px; display: block; filter: drop-shadow(0 1px 1px rgba(0,0,0,.4)); }
+  .raised {
+    min-height: 44px; padding: 0 18px; border: 0; border-radius: 14px; cursor: pointer;
+    background: linear-gradient(180deg, #3f8c5f, #2b6c47);
+    color: var(--cream); font-size: 22px;
+    text-shadow: 0 1px 0 rgba(0,0,0,.3);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 3px 0 #163d27, 0 5px 10px rgba(0,0,0,.35);
   }
+  .raised:active { transform: translateY(2px); box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 1px 0 #163d27, 0 2px 4px rgba(0,0,0,.35); }
 
-  /* the stage centers the score card in the space between top bar and keypad */
+  /* the stage centers the notepad between the top bar and keypad; equal top/bottom room for the rings */
   .stage {
     flex: 1;
     min-height: 0;
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--gap);
-    padding: var(--gap) max(var(--gap), env(safe-area-inset-right)) max(var(--gap), env(safe-area-inset-bottom)) max(var(--gap), env(safe-area-inset-left));
+    padding: calc(var(--gap) + var(--ring-up)) max(var(--gap), env(safe-area-inset-right)) max(calc(var(--gap) + var(--ring-up)), env(safe-area-inset-bottom)) max(var(--gap), env(safe-area-inset-left));
+    --card-w-max: calc(var(--side) + var(--end) + var(--n) * var(--card-col));
   }
-  body.kp-open .stage { padding-bottom: var(--gap); }
-  /* the card hugs its content and shrinks to scroll internally once it fills the stage */
-  .stage { --card-w-max: calc(var(--side) + var(--end) + var(--n) * var(--card-col)); }
-  .scroller {
+  body.kp-open .stage { padding-bottom: calc(var(--gap) + var(--ring-up)); }
+
+  /* the notepad: paper card with a binding strip; it hugs its content and scrolls inside once full */
+  .card {
+    position: relative;
     width: min(100%, var(--card-w-max));
+    flex: 0 1 auto; min-height: 0;
+    display: flex; flex-direction: column;
+    padding-top: var(--bind-h);
+    background: var(--paper-bg);
+    border-radius: 18px;
+    box-shadow: 0 1px 0 rgba(255,255,255,.5) inset, 0 2px 3px rgba(0,0,0,.25), 0 10px 28px rgba(0,0,0,.35);
+  }
+  .card::before {
+    content: ""; position: absolute; z-index: 5; pointer-events: none;
+    left: 10px; right: 10px; top: calc(-1 * var(--ring-up)); height: 62px;
+    background: var(--ring) 0 0 / 44px 62px;
+    background-repeat: space no-repeat;
+  }
+  .scroller {
     flex: 0 1 auto; min-height: 0;
     overflow: auto;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
-    background: var(--bg);
-    border-radius: 16px;
-    box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 6px 24px rgba(0,0,0,.12);
+    border-radius: 0 0 18px 18px;
+    scrollbar-width: thin; scrollbar-color: rgba(59,55,50,.35) transparent;
     scroll-padding: 16px var(--end) calc(var(--foot-h) + 16px) var(--side);
   }
   .sheet {
-    font-family: "Gochi Hand", "Comic Sans MS", "Chalkboard SE", cursive;
-    font-synthesis: none;
     width: calc(var(--side) + var(--end) + var(--n) * var(--col)); min-width: 100%;
     display: flex; flex-direction: column;
   }
@@ -126,24 +154,60 @@
     width: 100%;
     min-height: var(--row-h);
   }
-  .row > * { border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); min-width: 0; }
-  .row > :last-child { border-right: 0; }
+  /* each cell draws its own bottom + right pencil line; variants vary by row and column */
+  .row:nth-child(3n+1) { --hl: var(--h1); }
+  .row:nth-child(3n+2) { --hl: var(--h2); }
+  .row:nth-child(3n)   { --hl: var(--h3); }
+  .row > :nth-child(3n+1) { --vl: var(--v1); }
+  .row > :nth-child(3n+2) { --vl: var(--v2); }
+  .row > :nth-child(3n)   { --vl: var(--v3); }
+  .row > * {
+    min-width: 0;
+    background-image: var(--hl), var(--vl);
+    background-position: left bottom, right top;
+    background-size: 100% 6px, 6px 100%;
+    background-repeat: no-repeat;
+  }
+  .row > :last-child { background-image: var(--hl); }
+  /* the pinned column's own left line replaces the last player column's right line */
+  .row > :nth-last-child(2) { background-image: var(--hl); }
+  .row.foot > :nth-last-child(2) { background-image: var(--h-heavy), var(--grain-paper); background-repeat: no-repeat, repeat; }
+  /* pinned cells need opaque paper so scrolled content slides underneath */
+  .num, .rowend, .foot > *, .corner {
+    background-image: var(--hl), var(--vl), var(--grain-paper);
+    background-position: left bottom, right top, 0 0;
+    background-size: 100% 6px, 6px 100%, auto;
+    background-repeat: no-repeat, no-repeat, repeat;
+    background-color: var(--paper);
+  }
 
   /* footer: totals line on top, player names below; two rows shared by every column */
   .foot {
     position: sticky; bottom: 0; z-index: 3;
     grid-template-rows: var(--total-h) var(--name-h);
-    background: var(--head); border-top: 2px solid var(--brand);
   }
-  .foot > * { background: var(--head); border-bottom: 0; grid-row: 1 / -1; }
+  .foot > * {
+    grid-row: 1 / -1;
+    background-image: var(--h-heavy), var(--vl), var(--grain-paper);
+    background-position: left top, right top, 0 0;
+    background-size: 100% 6px, 6px 100%, auto;
+  }
+  /* the pinned × / + column draws its own left line so scrolled columns tuck under it */
+  .row > .rowend {
+    background-image: var(--hl), var(--v2), var(--grain-paper);
+    background-position: left bottom, left top, 0 0;
+    background-size: 100% 6px, 6px 100%, auto;
+    background-repeat: no-repeat, no-repeat, repeat;
+  }
+  .row.foot > .rowend { background-image: var(--h-heavy), var(--v2), var(--grain-paper); background-position: left top, left top, 0 0; }
   .corner, .num {
     position: sticky; left: 0; z-index: 2;
     display: flex; align-items: center; justify-content: center;
-    background: var(--bg); color: var(--muted); font-size: 20px;
+    color: var(--ink); font-size: 24px;
   }
   .foot .corner {
     z-index: 4; display: grid; grid-template-rows: subgrid; align-items: center; justify-items: center;
-    background: var(--head); color: var(--ink); font-size: 26px;
+    font-size: 30px;
   }
   .num { padding: 0; }
 
@@ -156,94 +220,103 @@
   .namecell .iconbtn { grid-row: 2; height: var(--name-h); }
   .iconbtn {
     flex: none; width: 28px; height: 44px; display: grid; place-items: center;
-    background: transparent; border: 0; color: var(--muted); font-size: 20px; line-height: 1; cursor: pointer;
+    background: transparent; border: 0; color: var(--ink); opacity: .8; font-size: 26px; line-height: 1; cursor: pointer;
   }
-  .iconbtn:active { color: var(--danger); }
+  .iconbtn:active { color: var(--danger); opacity: 1; }
   /* × and + stay pinned to the card's right edge while the grid scrolls sideways */
-  .rowend {
-    position: sticky; right: 0; z-index: 2;
-    display: grid; place-items: center; background: var(--bg);
-    box-shadow: inset 1px 0 var(--line);
-  }
-  .foot .rowend { z-index: 4; display: grid; grid-template-rows: subgrid; place-items: center; background: var(--head); }
+  .rowend { position: sticky; right: 0; z-index: 2; display: grid; place-items: center; }
+  .foot .rowend { z-index: 4; display: grid; grid-template-rows: subgrid; place-items: center; }
   /* same 6px margin as "+ Add round": fill the names-row cell minus the margin */
   .addp {
-    grid-row: 2; align-self: stretch; justify-self: stretch; margin: var(--btn-gap); padding: 0; border-radius: 10px; border: 1.5px dashed var(--brand); cursor: pointer;
-    background: transparent; color: var(--brand); font-size: 24px; line-height: 1;
+    grid-row: 2; align-self: stretch; justify-self: stretch; margin: var(--btn-gap); padding: 0;
+    border-radius: 10px; border: 1.5px dashed var(--brand); cursor: pointer;
+    background: transparent; color: var(--brand); font-size: 28px; line-height: 1;
   }
 
   .cell input {
     display: block; width: 100%; height: 100%; min-height: var(--row-h); padding: 0 10px;
-    font: inherit; font-size: 22px; text-align: right; color: inherit; background: transparent;
+    font: inherit; font-size: 26px; text-align: right; color: var(--ink); background: transparent;
     border: 0; border-radius: 0; outline: none;
   }
-  .cell input:focus { background: color-mix(in srgb, var(--brand) 16%, transparent); box-shadow: inset 0 0 0 2px var(--brand); }
-  .namecell:focus-within { box-shadow: inset 0 0 0 2px var(--brand); }
+  .cell input:focus { background: rgba(46,125,79,.12); box-shadow: inset 0 0 0 2px rgba(46,125,79,.75); border-radius: 6px; }
+  .namecell:focus-within input { background: rgba(46,125,79,.12); border-radius: 6px; }
 
   .total {
     grid-column: 1 / -1; grid-row: 1; align-self: stretch;
     display: flex; align-items: center; justify-content: flex-end;
-    padding: 0 10px; font-size: 26px; line-height: 1; background: var(--foot);
-    border-bottom: 1px solid var(--line);
+    padding: 0 6px; font-size: 28px; line-height: 1;
+    background: var(--h1) left bottom / 100% 6px no-repeat;
   }
-  .total.lead { background: var(--lead); }
+  .total span { padding: 4px 6px; }
+  .total.lead span { background: var(--circle) center / 100% 100% no-repeat; color: var(--brand-dark); }
 
   .addround { position: sticky; left: 0; width: var(--card-w, 100%); max-width: 100%; padding: var(--btn-gap); display: flex; }
   .addround button {
-    flex: 1; min-height: 44px; border: 1.5px dashed var(--brand); border-radius: 12px; background: transparent;
-    color: var(--brand); font-size: 20px; cursor: pointer;
+    flex: 1; min-height: 44px; border: 1.5px dashed var(--brand); border-radius: 12px;
+    background: var(--hatch) 0 0 / auto 100% repeat-x;
+    color: var(--brand-dark); font-size: 24px; cursor: pointer;
   }
 
-  /* "add to home screen" hint, sitting on the background under the card */
+  /* "add to home screen" hint, sitting on the felt under the card */
   .install {
     flex: none; width: min(100%, var(--card-w-max));
     display: flex; align-items: center; gap: 10px;
-    padding: 8px 4px 8px 12px; border-radius: 12px;
-    background: color-mix(in srgb, var(--brand) 10%, transparent);
-    color: var(--muted); font-size: 14px;
+    padding: 8px 4px 8px 14px; border-radius: 14px;
+    background: rgba(236,242,232,.78);
+    box-shadow: 0 4px 14px rgba(0,0,0,.25);
+    color: var(--ink); font-size: 18px;
   }
   .install[hidden], body.kp-open .install { display: none; }
   .install p { flex: 1; margin: 0; }
-  .install strong { color: var(--ink); font-weight: 600; }
-  .install svg { width: 15px; height: 15px; vertical-align: -2px; color: var(--brand); }
-  .install .go {
-    flex: none; min-height: 36px; padding: 0 14px; border: 0; border-radius: 10px; cursor: pointer;
-    background: var(--brand); color: var(--brand-ink); font-weight: 600;
-  }
+  .install strong { font-weight: inherit; }
+  .install svg { width: 16px; height: 16px; vertical-align: -2px; }
+  .install .go { flex: none; min-height: 38px; padding: 0 14px; font-size: 20px; }
   .install .iconbtn { width: 36px; }
 
   /* on-page number pad for score cells (replaces the iOS keyboard) */
   .keypad {
     flex: none;
-    display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: 52px; gap: 6px;
-    padding: 6px max(6px, env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) max(6px, env(safe-area-inset-left));
-    background: var(--line);
+    display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: 52px; gap: 7px;
+    padding: 8px max(8px, env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+    background: var(--grain-dark), linear-gradient(180deg, #1c4b32, #173f29);
+    box-shadow: 0 -4px 14px rgba(0,0,0,.3);
     touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
   }
   .keypad[hidden] { display: none; }
   .keypad button {
-    border: 0; border-radius: 10px; background: var(--bg); color: var(--ink);
-    font: 400 26px/1 system-ui, -apple-system, sans-serif; cursor: pointer;
-    box-shadow: 0 1px 0 rgba(0,0,0,.2);
+    border: 0; border-radius: 10px; cursor: pointer;
+    background: var(--paper-bg); color: var(--ink);
+    font: 30px/1 var(--hand);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.6), 0 3px 0 #b9ad94, 0 4px 6px rgba(0,0,0,.3);
   }
-  .keypad button.fn { background: var(--head); color: var(--brand); }
-  .keypad button:active { background: var(--lead); }
-  .keypad .enter { grid-row: span 2; background: var(--brand); color: var(--brand-ink); }
-  .keypad .enter:active { background: var(--brand); filter: brightness(1.15); }
+  .keypad button.fn { background: var(--grain-paper) var(--paper-dim); color: var(--brand-dark); }
+  .keypad button:active { transform: translateY(2px); box-shadow: inset 0 1px 0 rgba(255,255,255,.6), 0 1px 0 #b9ad94, 0 2px 3px rgba(0,0,0,.3); }
+  .keypad .enter {
+    grid-row: span 2; font-size: 36px; color: var(--cream);
+    background: linear-gradient(180deg, #3f8c5f, #2b6c47);
+    text-shadow: 0 1px 0 rgba(0,0,0,.3);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 3px 0 #10301e, 0 4px 6px rgba(0,0,0,.3);
+  }
+  .keypad .enter:active { box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 1px 0 #10301e, 0 2px 3px rgba(0,0,0,.3); }
 
   dialog {
-    width: min(92vw, 360px); padding: 20px; border: 0; border-radius: 16px; background: var(--bg); color: var(--ink);
-    box-shadow: 0 10px 40px rgba(0,0,0,.35);
+    width: min(92vw, 360px); padding: 22px 20px 20px; border: 0; border-radius: 16px;
+    background: var(--paper-bg); color: var(--ink);
+    box-shadow: 0 10px 40px rgba(0,0,0,.45);
   }
-  dialog::backdrop { background: rgba(0,0,0,.5); }
-  dialog h2 { margin: 0 0 6px; font-size: 18px; }
+  dialog::backdrop { background: rgba(10,25,16,.55); }
+  dialog h2 { margin: 0 0 6px; font-size: 26px; font-weight: 400; }
   dialog p { margin: 0 0 16px; color: var(--muted); }
-  .actions { display: flex; flex-direction: column; gap: 8px; }
+  .actions { display: flex; flex-direction: column; gap: 10px; }
   .actions button {
-    min-height: 48px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--head); cursor: pointer; font-weight: 600;
+    min-height: 48px; border-radius: 12px; cursor: pointer; font-size: 22px;
+    border: 1.5px dashed var(--muted); background: transparent; color: var(--ink);
   }
-  .actions button.danger { background: var(--danger); border-color: var(--danger); color: #fff; }
-  @media (prefers-color-scheme: dark) { .actions button.danger { color: #190806; } }
+  .actions button.danger {
+    border: 0; color: var(--cream);
+    background: linear-gradient(180deg, #b8382e, #93231c);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 3px 0 #5e1612;
+  }
 </style>
 </head>
 <body>
@@ -253,14 +326,14 @@
     <path d="M256 128v256M128 213h256M128 299h256" stroke="var(--topbar)" stroke-width="14"/>
     <path d="M168 171h48M296 171h48M168 256h48M296 256h24M168 341h24M296 341h48" stroke="var(--topbar)" stroke-width="22" stroke-linecap="round"/>
   </svg></h1>
-  <button type="button" id="reset">Reset</button>
+  <button type="button" class="raised" id="reset">Reset</button>
 </header>
 <main class="stage">
-  <div class="scroller" id="scroller"><div class="sheet" id="sheet"></div></div>
+  <div class="card"><div class="scroller" id="scroller"><div class="sheet" id="sheet"></div></div></div>
   <aside class="install" id="install" hidden>
     <p id="install-ios" hidden>Install: tap <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="Share"><path d="M12 15V3M8 7l4-4 4 4"/><path d="M8 11H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-2"/></svg> then <strong>Add to Home Screen</strong></p>
     <p id="install-prompt" hidden>Install ScoreCard on this device</p>
-    <button type="button" class="go" id="install-go" hidden>Install</button>
+    <button type="button" class="go raised" id="install-go" hidden>Install</button>
     <button type="button" class="iconbtn" id="install-x" aria-label="Dismiss">×</button>
   </aside>
 </main>
@@ -351,7 +424,7 @@ function clean(raw) {
 let totalEls = {};
 
 // --n lives on the stage so the card and the install hint share the same width
-function setCols() { scroller.parentElement.style.setProperty('--n', state.players.length); }
+function setCols() { scroller.closest('.stage').style.setProperty('--n', state.players.length); }
 // remember whether the card is scrolled to the newest round
 let pinnedBottom = true;
 scroller.addEventListener('scroll', () => {
@@ -383,6 +456,7 @@ function footRow() {
       c.append(x);
     }
     const t = el('div', 'total');
+    t.append(el('span'));
     totalEls[p.id] = t;
     c.append(t);
     row.append(c);
@@ -451,7 +525,7 @@ function updateTotals() {
   const max = Math.max(...Object.values(sums));
   for (const p of state.players) {
     const t = totalEls[p.id];
-    t.textContent = fmt(sums[p.id]);
+    t.firstChild.textContent = fmt(sums[p.id]);
     t.classList.toggle('lead', any && state.players.length > 1 && sums[p.id] === max);
   }
 }
