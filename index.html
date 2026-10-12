@@ -7,17 +7,22 @@
 <meta name="theme-color" content="#2e7d4f">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="ScoreCard">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="icon" href="icon-192.png" type="image/png" sizes="192x192">
 <link rel="apple-touch-icon" href="apple-touch-icon.png" sizes="180x180">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gochi+Hand&display=swap">
 <style>
   :root {
     color-scheme: light dark;
     --brand: #2e7d4f;
     --brand-ink: #ffffff;
+    --topbar: #2e7d4f;
+    --topbar-ink: #ffffff;
     --bg: #ffffff;
     --ink: #1b1f1d;
     --muted: #6b746f;
@@ -35,6 +40,8 @@
     :root {
       --brand: #4caf78;
       --brand-ink: #08150d;
+      --topbar: #1d3b2a;
+      --topbar-ink: #e8ece9;
       --bg: #121613;
       --ink: #e8ece9;
       --muted: #94a09a;
@@ -47,6 +54,8 @@
   }
   * { box-sizing: border-box; }
   html, body { height: 100%; margin: 0; overflow: hidden; }
+  /* solid brand color behind the status bar so iOS doesn't fade the header into white */
+  html { background: var(--topbar); }
   body {
     background: var(--bg);
     color: var(--ink);
@@ -60,16 +69,18 @@
   button { font: inherit; color: inherit; }
   .topbar {
     flex: none;
+    position: sticky; top: 0; z-index: 10;
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: env(safe-area-inset-top) max(12px, env(safe-area-inset-right)) 0 max(12px, env(safe-area-inset-left));
     min-height: calc(52px + env(safe-area-inset-top));
-    background: var(--brand);
-    color: var(--brand-ink);
+    background: var(--topbar);
+    color: var(--topbar-ink);
   }
-  @media (prefers-color-scheme: dark) { .topbar { background: #1d3b2a; color: #e8ece9; } }
-  .topbar h1 { margin: 0; font-size: 20px; font-weight: 700; }
+  .topbar h1 { margin: 0; display: flex; }
+  .topbar h1 svg { width: 34px; height: 34px; display: block; }
+  .tools { display: flex; gap: 8px; }
   .topbar button {
     min-height: 44px; min-width: 44px; padding: 0 14px;
     background: transparent; border: 1.5px solid currentColor; border-radius: 10px; cursor: pointer;
@@ -83,10 +94,12 @@
     -webkit-overflow-scrolling: touch;
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
-    scroll-padding: 56px var(--end) calc(var(--row-h) + 16px) var(--side);
+    scroll-padding: 76px var(--end) 16px var(--side);
   }
-  .sheet { width: calc(var(--side) + var(--end) + var(--n) * var(--col)); min-width: 100%; min-height: 100%; display: flex; flex-direction: column; }
-  .foot { margin-top: auto; }
+  .sheet {
+    font-family: "Gochi Hand", "Comic Sans MS", "Chalkboard SE", cursive;
+    font-synthesis: none; width: calc(var(--side) + var(--end) + var(--n) * var(--col)); min-width: 100%; min-height: 100%; display: flex; flex-direction: column; }
+  .sheet { padding-bottom: env(safe-area-inset-bottom); }
   .row {
     display: grid;
     grid-template-columns: var(--side) repeat(var(--n), minmax(var(--col), 1fr)) var(--end);
@@ -96,25 +109,24 @@
   .row > * { border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); min-width: 0; }
   .row > :last-child { border-right: 0; }
 
-  .head { position: sticky; top: 0; z-index: 3; background: var(--head); min-height: 56px; }
-  .head > * { background: var(--head); }
-  .foot { position: sticky; bottom: 0; z-index: 3; padding-bottom: env(safe-area-inset-bottom); background: var(--foot); border-top: 2px solid var(--brand); }
-  .foot > * { background: var(--foot); border-bottom: 0; }
+  .head { position: sticky; top: 0; z-index: 3; background: var(--head); }
+  .head > * { background: var(--head); border-bottom: 2px solid var(--brand); }
   .corner, .num {
     position: sticky; left: 0; z-index: 2;
     display: flex; align-items: center; justify-content: center;
-    background: var(--bg); color: var(--muted); font-weight: 600;
+    background: var(--bg); color: var(--muted); font-size: 20px;
   }
-  .head .corner { background: var(--head); z-index: 4; }
-  .foot .corner { background: var(--foot); z-index: 4; color: var(--ink); font-size: 20px; }
+  .head .corner { background: var(--head); z-index: 4; flex-direction: column; justify-content: space-evenly; }
+  .head .corner span:last-child { color: var(--ink); font-size: 22px; }
   .num { padding: 0; }
 
-  .namecell { display: flex; align-items: center; }
+  .namecell { display: grid; grid-template-columns: 1fr auto; align-items: center; }
   .namecell input {
-    flex: 1; min-width: 0; width: 100%; height: 56px; padding: 0 0 0 8px;
-    font: inherit; font-weight: 700; color: inherit; background: transparent; border: 0; border-radius: 0; outline: none;
+    min-width: 0; width: 100%; height: 36px; padding: 0 0 0 8px;
+    font: inherit; font-size: 20px; color: inherit; background: transparent; border: 0; border-radius: 0; outline: none;
     text-overflow: ellipsis;
   }
+  .namecell .iconbtn { height: 36px; }
   .iconbtn {
     flex: none; width: 28px; height: 44px; display: grid; place-items: center;
     background: transparent; border: 0; color: var(--muted); font-size: 20px; line-height: 1; cursor: pointer;
@@ -123,31 +135,31 @@
   .rowend { display: grid; place-items: center; background: var(--bg); }
   .head .rowend { background: var(--head); }
   .addp {
-    width: 44px; height: 44px; border-radius: 50%; border: 0; cursor: pointer;
-    background: var(--brand); color: var(--brand-ink); font-size: 26px; line-height: 1;
+    width: 40px; height: 44px; border-radius: 10px; border: 1.5px dashed var(--brand); cursor: pointer;
+    background: transparent; color: var(--brand); font-size: 24px; line-height: 1;
   }
 
   .cell input {
     display: block; width: 100%; height: 100%; min-height: var(--row-h); padding: 0 10px;
-    font: inherit; font-size: 18px; text-align: right; color: inherit; background: transparent;
+    font: inherit; font-size: 22px; text-align: right; color: inherit; background: transparent;
     border: 0; border-radius: 0; outline: none;
   }
   .cell input:focus { background: color-mix(in srgb, var(--brand) 16%, transparent); box-shadow: inset 0 0 0 2px var(--brand); }
   .namecell:focus-within { box-shadow: inset 0 0 0 2px var(--brand); }
 
-  .total { display: flex; align-items: center; justify-content: flex-end; padding: 0 10px; font-size: 20px; font-weight: 700; }
-  .total.lead { background: var(--lead); }
-  .foot .rowend { background: var(--foot); }
-  .signbtn {
-    width: 44px; height: 44px; border-radius: 10px; border: 1.5px solid var(--brand); cursor: pointer;
-    background: var(--bg); color: var(--brand); font-size: 20px; font-weight: 700;
+  .total {
+    grid-column: 1 / -1; align-self: stretch;
+    display: flex; align-items: center; justify-content: flex-end;
+    min-height: 36px; padding: 0 10px; font-size: 26px; line-height: 1; background: var(--foot);
   }
+  .total.lead { background: var(--lead); }
+  .topbar .signbtn { font-size: 20px; font-weight: 700; }
   .signbtn[hidden] { display: none; }
 
   .addround { position: sticky; left: 0; width: 100vw; max-width: 100%; padding: 12px; display: flex; }
   .addround button {
     flex: 1; min-height: 48px; border: 1.5px dashed var(--brand); border-radius: 12px; background: transparent;
-    color: var(--brand); font-weight: 600; cursor: pointer;
+    color: var(--brand); font-size: 20px; cursor: pointer;
   }
 
   dialog {
@@ -167,8 +179,15 @@
 </head>
 <body>
 <header class="topbar">
-  <h1>ScoreCard</h1>
-  <button type="button" id="reset">Reset</button>
+  <h1><svg viewBox="128 128 256 256" role="img" aria-label="ScoreCard">
+    <rect x="128" y="128" width="256" height="256" rx="30" fill="currentColor"/>
+    <path d="M256 128v256M128 213h256M128 299h256" stroke="var(--topbar)" stroke-width="14"/>
+    <path d="M168 171h48M296 171h48M168 256h48M296 256h24M168 341h24M296 341h48" stroke="var(--topbar)" stroke-width="22" stroke-linecap="round"/>
+  </svg></h1>
+  <div class="tools">
+    <button type="button" class="signbtn" id="sign" aria-label="Flip sign" hidden>±</button>
+    <button type="button" id="reset">Reset</button>
+  </div>
 </header>
 <main class="scroller" id="scroller"><div class="sheet" id="sheet"></div></main>
 <dialog id="dlg">
@@ -243,7 +262,10 @@ function setCols() { sheet.style.setProperty('--n', state.players.length); }
 
 function headRow() {
   const row = el('div', 'row head');
-  row.append(Object.assign(el('div', 'corner'), { textContent: '#' }));
+  const corner = el('div', 'corner');
+  corner.append(Object.assign(el('span'), { textContent: '#' }), Object.assign(el('span'), { textContent: 'Σ' }));
+  row.append(corner);
+  totalEls = {};
   for (const p of state.players) {
     const c = el('div', 'namecell');
     const inp = el('input', '', { type: 'text', 'aria-label': 'Player name', maxlength: 20, placeholder: 'Name', enterkeyhint: 'done', autocomplete: 'off' });
@@ -256,6 +278,9 @@ function headRow() {
       x.dataset.removePlayer = p.id;
       c.append(x);
     }
+    const t = el('div', 'total');
+    totalEls[p.id] = t;
+    c.append(t);
     row.append(c);
   }
   const end = el('div', 'rowend');
@@ -292,24 +317,6 @@ function roundRow(r, idx) {
   return row;
 }
 
-function footRow() {
-  const row = el('div', 'row foot');
-  row.append(Object.assign(el('div', 'corner'), { textContent: 'Σ' }));
-  totalEls = {};
-  for (const p of state.players) {
-    const t = el('div', 'total');
-    totalEls[p.id] = t;
-    row.append(t);
-  }
-  const end = el('div', 'rowend');
-  const b = el('button', 'signbtn', { type: 'button', 'aria-label': 'Flip sign', hidden: '' });
-  b.id = 'sign';
-  b.textContent = '±';
-  end.append(b);
-  row.append(end);
-  return row;
-}
-
 function render() {
   setCols();
   sheet.replaceChildren(
@@ -323,7 +330,6 @@ function render() {
       w.append(b);
       return w;
     })(),
-    footRow(),
   );
   updateTotals();
 }
@@ -405,11 +411,13 @@ sheet.addEventListener('keydown', (e) => {
   } else t.blur();
 });
 
+// select the whole value on focus so typing replaces it
 sheet.addEventListener('focusin', (e) => {
-  if (e.target.dataset.score) {
-    $('sign').hidden = false;
-    setTimeout(() => e.target.select?.(), 0);
-  }
+  const t = e.target;
+  if (t.tagName !== 'INPUT') return;
+  if (t.dataset.score) $('sign').hidden = false;
+  t.addEventListener('mouseup', (ev) => ev.preventDefault(), { once: true });
+  setTimeout(() => t.setSelectionRange(0, t.value.length), 0);
 });
 sheet.addEventListener('focusout', (e) => {
   if (e.target.dataset.score) setTimeout(() => {
@@ -417,21 +425,20 @@ sheet.addEventListener('focusout', (e) => {
   }, 0);
 });
 
-// keep the sign button from stealing focus
-sheet.addEventListener('pointerdown', (e) => {
-  if (e.target.closest('#sign')) {
-    e.preventDefault();
-    const a = document.activeElement;
-    if (a?.dataset?.score) {
-      const [text] = clean(a.value.startsWith('-') ? a.value.slice(1) : '-' + a.value);
-      a.value = text;
-      a.dispatchEvent(new Event('input', { bubbles: true }));
-    }
+// flip sign of the focused score without stealing focus
+const sign = $('sign');
+sign.addEventListener('pointerdown', (e) => {
+  e.preventDefault();
+  const a = document.activeElement;
+  if (a?.dataset?.score) {
+    const [text] = clean(a.value.startsWith('-') ? a.value.slice(1) : '-' + a.value);
+    a.value = text;
+    a.dispatchEvent(new Event('input', { bubbles: true }));
   }
 });
 // Safari can still move focus on mousedown/touchstart, so block those too
 for (const type of ['mousedown', 'touchstart']) {
-  sheet.addEventListener(type, (e) => { if (e.target.closest('#sign')) e.preventDefault(); }, { passive: false });
+  sign.addEventListener(type, (e) => e.preventDefault(), { passive: false });
 }
 
 sheet.addEventListener('click', async (e) => {

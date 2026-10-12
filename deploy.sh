@@ -13,7 +13,7 @@ source ./deploy.env
 : "${DEPLOY_HOST:?set DEPLOY_HOST in deploy.env}"
 : "${DEPLOY_PATH:?set DEPLOY_PATH in deploy.env}"
 
-rsync -avz --delete \
+rsync -avz --delete --chmod=D755,F644 \
   --include='index.html' \
   --include='manifest.webmanifest' \
   --include='icon.svg' \
