@@ -16,7 +16,6 @@ source ./deploy.env
 rsync -avz --delete \
   --include='index.html' \
   --include='manifest.webmanifest' \
-  --include='icon.svg' \
   --include='*.png' \
   --exclude='*' \
   "$@" \
