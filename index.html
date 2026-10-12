@@ -31,7 +31,8 @@
     --foot: #e6f0e9;
     --lead: #d5ecdc;
     --danger: #b3261e;
-    --col: 72px;
+    /* column fits a 4ch name (20px text = 5ch at the grid's 16px) + 8px padding + 28px × */
+    --col: max(72px, calc(5ch + 36px));
     --card-col: 110px;
     --gap: 10px;
     --stage: #e9eeea;
@@ -95,15 +96,15 @@
   .stage {
     flex: 1;
     min-height: 0;
-    display: grid; place-items: center;
-    grid-template: minmax(0, 1fr) / minmax(0, 1fr);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--gap);
     padding: var(--gap) max(var(--gap), env(safe-area-inset-right)) max(var(--gap), env(safe-area-inset-bottom)) max(var(--gap), env(safe-area-inset-left));
   }
   body.kp-open .stage { padding-bottom: var(--gap); }
-  /* the card hugs its content and scrolls internally once it fills the stage */
+  /* the card hugs its content and shrinks to scroll internally once it fills the stage */
+  .stage { --card-w-max: calc(var(--side) + var(--end) + var(--n) * var(--card-col)); }
   .scroller {
-    width: min(100%, calc(var(--side) + var(--end) + var(--n) * var(--card-col)));
-    max-height: 100%;
+    width: min(100%, var(--card-w-max));
+    flex: 0 1 auto; min-height: 0;
     overflow: auto;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
@@ -147,7 +148,7 @@
 
   .namecell { display: grid; grid-template-columns: 1fr auto; grid-template-rows: subgrid; align-items: center; }
   .namecell input {
-    grid-row: 2; min-width: 0; width: 100%; height: var(--name-h); padding: 0 0 0 8px;
+    grid-row: 2; min-width: calc(4ch + 8px); width: 100%; height: var(--name-h); padding: 0 0 0 8px;
     font: inherit; font-size: 20px; color: inherit; background: transparent; border: 0; border-radius: 0; outline: none;
     text-overflow: ellipsis;
   }
@@ -190,6 +191,24 @@
     flex: 1; min-height: 44px; border: 1.5px dashed var(--brand); border-radius: 12px; background: transparent;
     color: var(--brand); font-size: 20px; cursor: pointer;
   }
+
+  /* "add to home screen" hint, sitting on the background under the card */
+  .install {
+    flex: none; width: min(100%, var(--card-w-max));
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 4px 8px 12px; border-radius: 12px;
+    background: color-mix(in srgb, var(--brand) 10%, transparent);
+    color: var(--muted); font-size: 14px;
+  }
+  .install[hidden], body.kp-open .install { display: none; }
+  .install p { flex: 1; margin: 0; }
+  .install strong { color: var(--ink); font-weight: 600; }
+  .install svg { width: 15px; height: 15px; vertical-align: -2px; color: var(--brand); }
+  .install .go {
+    flex: none; min-height: 36px; padding: 0 14px; border: 0; border-radius: 10px; cursor: pointer;
+    background: var(--brand); color: var(--brand-ink); font-weight: 600;
+  }
+  .install .iconbtn { width: 36px; }
 
   /* on-page number pad for score cells (replaces the iOS keyboard) */
   .keypad {
@@ -234,7 +253,15 @@
   </svg></h1>
   <button type="button" id="reset">Reset</button>
 </header>
-<main class="stage"><div class="scroller" id="scroller"><div class="sheet" id="sheet"></div></div></main>
+<main class="stage">
+  <div class="scroller" id="scroller"><div class="sheet" id="sheet"></div></div>
+  <aside class="install" id="install" hidden>
+    <p id="install-ios" hidden>Install: tap <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="Share"><path d="M12 15V3M8 7l4-4 4 4"/><path d="M8 11H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-2"/></svg> then <strong>Add to Home Screen</strong></p>
+    <p id="install-prompt" hidden>Install ScoreCard on this device</p>
+    <button type="button" class="go" id="install-go" hidden>Install</button>
+    <button type="button" class="iconbtn" id="install-x" aria-label="Dismiss">×</button>
+  </aside>
+</main>
 <div class="keypad" id="keypad" role="group" aria-label="Number pad" hidden>
   <button type="button" data-key="7">7</button>
   <button type="button" data-key="8">8</button>
@@ -321,9 +348,19 @@ function clean(raw) {
 // ---------- rendering ----------
 let totalEls = {};
 
-function setCols() { scroller.style.setProperty('--n', state.players.length); }
-// keep "+ Add round" as wide as the visible card while the grid scrolls sideways
-new ResizeObserver(() => scroller.style.setProperty('--card-w', scroller.clientWidth + 'px')).observe(scroller);
+// --n lives on the stage so the card and the install hint share the same width
+function setCols() { scroller.parentElement.style.setProperty('--n', state.players.length); }
+// remember whether the card is scrolled to the newest round
+let pinnedBottom = true;
+scroller.addEventListener('scroll', () => {
+  pinnedBottom = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 4;
+}, { passive: true });
+new ResizeObserver(() => {
+  // keep "+ Add round" as wide as the visible card while the grid scrolls sideways
+  scroller.style.setProperty('--card-w', scroller.clientWidth + 'px');
+  // card resized (install hint, keypad, rotation): stay on the newest round unless a cell is being edited
+  if (pinnedBottom && !document.activeElement?.dataset?.score) scroller.scrollTop = scroller.scrollHeight;
+}).observe(scroller);
 
 function footRow() {
   const row = el('div', 'row foot');
@@ -595,6 +632,46 @@ $('reset').addEventListener('click', async () => {
   save(); render();
   scroller.scrollTo({ left: 0, top: scroller.scrollHeight });
 });
+
+// ---------- install hint ----------
+// iOS has no install API, so show instructions; Chromium browsers fire beforeinstallprompt.
+{
+  const DISMISS_KEY = 'scorecard:install-dismissed';
+  const box = $('install');
+  const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  let dismissed = false;
+  try { dismissed = localStorage.getItem(DISMISS_KEY) === '1'; } catch {}
+  const ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  let deferred = null;
+  const hide = () => { box.hidden = true; };
+
+  if (!standalone && !dismissed) {
+    if (ios) {
+      $('install-ios').hidden = false;
+      box.hidden = false;
+    }
+    addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferred = e;
+      $('install-ios').hidden = true;
+      $('install-prompt').hidden = false;
+      $('install-go').hidden = false;
+      box.hidden = false;
+    });
+  }
+  $('install-go').addEventListener('click', async () => {
+    if (!deferred) return;
+    deferred.prompt();
+    await deferred.userChoice;
+    deferred = null;
+    hide();
+  });
+  $('install-x').addEventListener('click', () => {
+    try { localStorage.setItem(DISMISS_KEY, '1'); } catch {}
+    hide();
+  });
+  addEventListener('appinstalled', hide);
+}
 
 render();
 scrollToBottom();
